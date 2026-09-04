@@ -100,7 +100,7 @@ about 200 s.
 ## Quickstart
 
 ```bash
-git clone https://github.com/pangoleen/qwen3.8-27b-dgx-spark-dflash2 && cd qwen3.8-27b-dgx-spark-dflash2
+git clone https://github.com/rajivpoddar/qwen3.8-27b-dgx-spark-dflash2 && cd qwen3.8-27b-dgx-spark-dflash2
 docker build -t qwen38-27b-sglang-dflash2-sm121:0.3.0 -f image/Dockerfile image/   # ~1 min on top of the base pull
 mkdir -p ~/models && openssl rand -hex 32 > ~/models/vllm_api_key.txt && chmod 600 ~/models/vllm_api_key.txt
 cp .env.sample .env && source .env   # exports SPARK_* and the two checkpoint revisions
@@ -115,6 +115,23 @@ curl -s http://localhost:8003/v1/chat/completions \
 `serve.sh` waits for health, then checks two things a green `/v1/models` does not
 prove: that `/tokenize` answers 200, which needs a live scheduler, and that the
 container's restart count is still zero.
+
+### HeyDonna long-context profile
+
+This fork includes `serve-heydonna.sh` for Claude development slots. It uses the
+same image, weights and DFlash2 settings, but fixes the service name and port and
+forces `MAX_RUNNING=4`. That prevents a stale benchmark setting such as 16 from
+shrinking the KV pool while several large agent contexts arrive together.
+
+```bash
+cp .env.sample .env
+./serve-heydonna.sh
+# Wait for tokenize=200 and restarts=0 before directing any client to port 30000.
+NAME=qwen38-pango ./stop.sh
+```
+
+The wrapper intentionally does not start, stop or restart any clients. Admit
+long-context clients one at a time after the readiness checks complete.
 
 ## What you get, and under what conditions
 
@@ -370,6 +387,7 @@ one rung of the sweep, reporting each step. It never prints the API key.
 
 ```
 serve.sh                        launch the server           every knob above
+serve-heydonna.sh               long-context slot profile   port 30000, MAX_RUNNING=4
 stop.sh                         stop it (restart policy needs an explicit stop)
 .env.sample                     SPARK_* variables for bench/
 bench/ctxsweep.py               context ladder, the headline instrument
