@@ -1,0 +1,13 @@
+ARG BASE_IMAGE=qwen38-pango-fairness-base:6fa3424b7b47
+FROM ${BASE_IMAGE}
+COPY anthropic_liveness.py /sgl-workspace/sglang/python/sglang/srt/entrypoints/anthropic/liveness.py
+COPY patches/anthropic-liveness.patch /opt/pango-patches/anthropic-liveness.patch
+COPY qwen-inline-system.jinja /opt/pango-patches/qwen-inline-system.jinja
+COPY test/test_anthropic_liveness.py /opt/pango-patches/test_anthropic_liveness.py
+WORKDIR /sgl-workspace/sglang
+RUN echo '4ed918fefb7fe9fe3906faea105ff8b67fac15d987aedfb39e33f305f94dee6f  python/sglang/srt/entrypoints/anthropic/serving.py' | sha256sum -c - \
+ && git apply --check /opt/pango-patches/anthropic-liveness.patch \
+ && git apply /opt/pango-patches/anthropic-liveness.patch \
+ && python -m compileall -q python/sglang/srt/entrypoints/anthropic \
+ && python /opt/pango-patches/test_anthropic_liveness.py
+LABEL io.heydonna.stream-fix="anthropic-heartbeats-inline-system-20260905"
