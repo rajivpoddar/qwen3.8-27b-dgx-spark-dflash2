@@ -1,0 +1,17 @@
+# Experimental additive overlay; build the unchanged image/Dockerfile first.
+# This tag is never selected by serve.sh unless IMAGE is explicitly set.
+ARG BASE_IMAGE=qwen38-27b-sglang-dflash2-sm121:0.3.0
+FROM ${BASE_IMAGE}
+COPY patches/34058-64b01ed.patch /opt/pango-patches/34058-64b01ed.patch
+WORKDIR /sgl-workspace/sglang
+# Fail closed if the scheduler or argument schema differs from our tested base.
+# Apply the upstream diff, not whole newer files which could undo base changes.
+RUN echo '26df94340228909d720f928e8da78eaf0c8068ef417070c9782835891a6e8cc3  python/sglang/srt/managers/scheduler.py' | sha256sum -c - \
+ && echo 'd5393cc433e4b68f285d6473dc0af919c588f4951385675fe82366452d248e61  python/sglang/srt/server_args.py' | sha256sum -c - \
+ && git apply --check /opt/pango-patches/34058-64b01ed.patch \
+ && git apply /opt/pango-patches/34058-64b01ed.patch \
+ && python -m compileall -q python/sglang/srt/managers/consecutive_prefill_limiter.py python/sglang/srt/managers/scheduler.py python/sglang/srt/server_args.py
+COPY test/registered/scheduler/test_prefill_fairness_recipe.py /sgl-workspace/sglang/test/registered/scheduler/test_prefill_fairness_recipe.py
+LABEL io.heydonna.prefill-fairness-pr="https://github.com/sgl-project/sglang/pull/34058" \
+      io.heydonna.prefill-fairness-head="64b01ed86a22baa3d2788d3addbba93a0ac10b5b" \
+      io.heydonna.prefill-fairness-status="experimental-opt-in"

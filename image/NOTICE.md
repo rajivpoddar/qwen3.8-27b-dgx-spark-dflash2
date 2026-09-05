@@ -19,3 +19,15 @@ docker build -t qwen38-27b-sglang-dflash2-sm121:0.3.0 -f image/Dockerfile image/
 After boot, `serve.sh` greps the log for `kept eager (reason=quantized lm_head)`;
 if that line appears, #35496 is missing and the selector runs outside the draft
 CUDA graph.
+
+## Experimental scheduler overlay
+
+`Dockerfile.prefill-fairness` adds the unmodified diff of upstream SGLang
+[PR #34058](https://github.com/sgl-project/sglang/pull/34058), pinned to
+`64b01ed86a22baa3d2788d3addbba93a0ac10b5b`, on top of the original image.
+`patches/34058-64b01ed.patch` contains three runtime-file changes and one
+upstream test file, under SGLang's Apache License 2.0, copyright the SGLang
+contributors. The PR was open at vendoring time. Recipe-specific CPU regressions
+are added separately; the upstream patch itself has not been modified.
+See [PREFILL_FAIRNESS.md](../PREFILL_FAIRNESS.md) for the isolated build, opt-in
+flag, validation limits, and rollback. The original Dockerfile is unchanged.

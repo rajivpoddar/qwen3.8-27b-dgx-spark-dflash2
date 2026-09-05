@@ -1,5 +1,9 @@
 # Qwen3.8-27B on one DGX Spark (GB10)
 
+**HeyDonna experimental fork:** [prefill fairness overlay](PREFILL_FAIRNESS.md)
+vendors SGLang PR #34058 as a separate opt-in image. Default serving is unchanged;
+the benchmark figures below are the original recipe's, not results for the patch.
+
 By Paolo Rosson, [@redp314 on X](https://x.com/redp314), where the results and
 follow-ups are posted first.
 
