@@ -1,5 +1,9 @@
 # Qwen3.8-27B on one DGX Spark (GB10)
 
+**Experimental HeyDonna profile:** [Qwopus NVFP4 + native NEXTN/MTP](qwopus/README.md).
+It is separate from the stock Pango recipe below; these published benchmarks
+do not describe Qwopus. Existing launch scripts remain unchanged.
+
 By Paolo Rosson, [@redp314 on X](https://x.com/redp314), where the results and
 follow-ups are posted first.
 

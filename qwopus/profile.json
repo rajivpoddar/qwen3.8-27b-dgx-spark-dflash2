@@ -1,0 +1,17 @@
+{
+  "model": "sojufx/Qwopus3.8-27B-Flash-NVFP4",
+  "revision": "e1fad175b1f069b9e19a0293c561cefb516df7e4",
+  "image": "sha256:10f14c2258105bbc67e863fde712af6b18ebd10990f81e82573956bf5daeab46",
+  "container": "qwopus-nextn",
+  "alias": "qwopus3.8-27b-flash-nvfp4",
+  "port": 30000,
+  "context": 131072,
+  "max_running": 4,
+  "mem_fraction": 0.75,
+  "chunk": 4096,
+  "shards": {
+    "model-00001-of-00003.safetensors": {"size": 9965644108, "sha256": "57516b2521008ef62d5c6f4ffe72dc23929299881a8db4465dd88a28a2636604"},
+    "model-00002-of-00003.safetensors": {"size": 9985743924, "sha256": "2037df1006d37565e41a3983aa5543599be034a452d20a055e4af7f684ac5525"},
+    "model-00003-of-00003.safetensors": {"size": 1970286924, "sha256": "35a48ddbe9fadaf233bc668ea183ac47a5084d9c2b843fb620d671b957423d79"}
+  }
+}
