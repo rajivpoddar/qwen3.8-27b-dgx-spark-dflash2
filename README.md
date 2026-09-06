@@ -309,6 +309,17 @@ with `"chat_template_kwargs": {"enable_thinking": true}`; expect lower accepted
 tokens per pass and more output tokens, which is a heavier workload, not a slower
 server. Tool calls come back in the OpenAI `tool_calls` shape.
 
+**If you turn thinking on, leave `preserve_thinking` alone.** The checkpoint's
+own chat template treats an unset `preserve_thinking` as true — it keeps prior
+turns' reasoning in context. `serve.sh` does not override it, on purpose:
+setting it to `false` strips that reasoning from every later turn, and a
+community report (DeepSWE 1.1, this model, via Claude Code, 2026-09-06) found
+that costs both accuracy and output tokens on multi-turn agent work. Not
+measured on this box, but the mechanism is confirmed straight from the
+checkpoint's `chat_template.jinja`. Multi-turn agent loops with thinking on are
+exactly where this matters most; a single-turn call with thinking on is
+unaffected either way.
+
 ## Using the API
 
 OpenAI-compatible on `:8003`. Streaming with `stream_options.include_usage` is
