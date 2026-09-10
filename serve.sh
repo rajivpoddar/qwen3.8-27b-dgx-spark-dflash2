@@ -190,13 +190,17 @@ for i in $(seq 1 120); do
     echo "ready after ${i}0s"
     # A config bug that hides behind a healthy-looking server is the failure
     # mode this project keeps rediscovering. Make this one visible.
-    if docker logs "$NAME" 2>&1 | grep -q "kept eager (reason=quantized lm_head)"; then
-      echo
-      echo "WARNING: the DFlash2 selector is running EAGER, outside the draft"
-      echo "CUDA graph. This image predates upstream PR #35496. Expect lower"
-      echo "throughput. Use IMAGE=qwen38-27b-sglang-dflash2-sm121:0.3.0"
+    if [ "$SPEC" = "1" ]; then
+      if docker logs "$NAME" 2>&1 | grep -q "kept eager (reason=quantized lm_head)"; then
+        echo
+        echo "WARNING: the DFlash2 selector is running EAGER, outside the draft"
+        echo "CUDA graph. This image predates upstream PR #35496. Expect lower"
+        echo "throughput. Use IMAGE=qwen38-27b-sglang-dflash2-sm121:0.3.0"
+      else
+        echo "selector: folded into the draft cuda graph (PR #35496 present)"
+      fi
     else
-      echo "selector: folded into the draft cuda graph (PR #35496 present)"
+      echo "external DFlash2: disabled (native/none supplied through EXTRA_ARGS)"
     fi
     # /v1/models answers before the scheduler is live. /tokenize does not.
     code=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
