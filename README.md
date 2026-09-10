@@ -1,8 +1,16 @@
-# Qwen3.8-27B on one DGX Spark (GB10)
+# Qwen3.8-27B TURBO-Fable + DFlash2 on one DGX Spark
 
-**HeyDonna experimental fork:** [prefill fairness overlay](PREFILL_FAIRNESS.md)
-vendors SGLang PR #34058 as a separate opt-in image. Default serving is unchanged;
-the benchmark figures below are the original recipe's, not results for the patch.
+This fork adds a pinned production profile for
+[`SeatownSin/Qwen3.8-27B-TURBO-Fable-…-NVFP4-W4A16`](https://huggingface.co/SeatownSin/Qwen3.8-27B-TURBO-Fable-Cold-Fusion-735-882-Heretic-Uncensored-NM-DAU-NVFP4-W4A16)
+on top of Pangoleen's reproducible DFlash2 recipe. The target retains the
+Qwen3.8-27B architecture, tokenizer, BF16 `lm_head`, vision stack and native
+262K context. DFlash2 remains lossless, but its acceptance and speed with this
+fine-tune must be measured rather than inferred from the base-model numbers.
+
+**HeyDonna additions:** [prefill fairness overlay](PREFILL_FAIRNESS.md) plus
+[Anthropic stream/cache repair](STREAM_FIX.md). The TURBO-Fable profile combines
+both in a separate image and preserves Pangoleen's base launcher. All benchmark
+figures below are the original base-model recipe's unless explicitly labelled.
 
 By Paolo Rosson, [@redp314 on X](https://x.com/redp314), where the results and
 follow-ups are posted first.
@@ -103,8 +111,41 @@ about 200 s.
 
 ## Quickstart
 
+### TURBO-Fable profile for four Claude slots
+
 ```bash
-git clone https://github.com/rajivpoddar/qwen3.8-27b-dgx-spark-dflash2 && cd qwen3.8-27b-dgx-spark-dflash2
+git clone https://github.com/rajivpoddar/Qwen3.8-27B-TURBO-Fable-DFlash2-DGX-Spark
+cd Qwen3.8-27B-TURBO-Fable-DFlash2-DGX-Spark
+cp .env.sample .env
+./prepare-turbo-fable.sh
+./build-heydonna-image.sh
+./serve-turbo-fable.sh
+```
+
+The profile listens on port `30000`, advertises the existing `qwen3.8-27b`
+alias, disables thinking by default through `serve.sh`, admits four requests,
+uses 2,048-token prefill chunks, and enables one decode opportunity after each
+consecutive prefill batch. Anthropic heartbeat frames keep a valid stream alive
+during long upstream silence; the inline-system template preserves stable
+prefixes when Claude changes reminders between turns.
+
+The profile does not start, stop or restart Claude slots. Wait for
+`tokenize: 200`, `restarts: 0`, a successful authenticated inference request,
+and advancing metrics before continuing slots one at a time. A fresh or
+compacted session is still required when an existing history itself is too
+large; scheduler fairness cannot remove the cost of a cold 50K-100K prompt.
+
+Use `DRY_RUN=1 ./serve-turbo-fable.sh` to inspect the pinned, non-secret launch
+contract without touching Docker. Stop this profile with:
+
+```bash
+NAME=qwen38-turbo-fable-pango ./stop.sh
+```
+
+### Original Pangoleen base-model profile
+
+```bash
+git clone https://github.com/pangoleen/qwen3.8-27b-dgx-spark-dflash2 && cd qwen3.8-27b-dgx-spark-dflash2
 docker build -t qwen38-27b-sglang-dflash2-sm121:0.3.0 -f image/Dockerfile image/   # ~1 min on top of the base pull
 mkdir -p ~/models && openssl rand -hex 32 > ~/models/vllm_api_key.txt && chmod 600 ~/models/vllm_api_key.txt
 cp .env.sample .env && source .env   # exports SPARK_* and the two checkpoint revisions
@@ -403,6 +444,9 @@ one rung of the sweep, reporting each step. It never prints the API key.
 ```
 serve.sh                        launch the server           every knob above
 serve-heydonna.sh               long-context slot profile   port 30000, MAX_RUNNING=4
+serve-turbo-fable.sh            pinned TURBO-Fable profile  patched image, port 30000, four seats
+prepare-turbo-fable.sh          download pinned target/draft without starting a server
+build-heydonna-image.sh         build base + fairness + Anthropic stream/cache image
 stop.sh                         stop it (restart policy needs an explicit stop)
 .env.sample                     SPARK_* variables for bench/
 bench/ctxsweep.py               context ladder, the headline instrument
