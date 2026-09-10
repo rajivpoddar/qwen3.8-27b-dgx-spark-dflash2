@@ -14,7 +14,7 @@ elif [ "${DRY_RUN:-0}" != 1 ]; then
   exit 2
 fi
 
-export IMAGE=${IMAGE:-qwen38-pango-heydonna:stream-fix-a4a6feb}
+export IMAGE=${IMAGE:-qwen38-pango-stream-fix:20260905}
 export NAME=qwen38-turbo-fable-pango-native-mtp
 export PORT=30000
 export MODEL=SeatownSin/Qwen3.8-27B-TURBO-Fable-Cold-Fusion-735-882-Heretic-Uncensored-NM-DAU-NVFP4-W4A16
