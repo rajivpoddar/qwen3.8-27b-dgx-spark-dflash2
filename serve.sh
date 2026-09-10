@@ -155,6 +155,15 @@ echo "max-running  $MAX_RUNNING   autotune $AUTOTUNE   tactic cache $SGLANG_CACH
 
 # --restart unless-stopped survives a host reboot and still respects a
 # deliberate docker stop. It also hides a crash loop: check RestartCount.
+#
+# The template default for an unset preserve_thinking is true (checked in the
+# checkpoint's own chat_template.jinja: "preserve_thinking is undefined" reads
+# as preserve). Only enable_thinking is forced off here, so a caller who turns
+# thinking on per request inherits that safe default instead of an explicit
+# false. Do not add preserve_thinking:false back here: it strips prior-turn
+# reasoning from the context on every later turn, which on this model costs
+# both accuracy and output tokens on multi-turn agent work (community report,
+# DeepSWE 1.1 via Claude Code, 2026-09-06 — not measured on this box).
 docker run -d --name "$NAME" --restart unless-stopped \
   --gpus all --shm-size 32g --ipc=host \
   ${CPUSET:+--cpuset-cpus $CPUSET} -p ${PORT}:${PORT} \
@@ -169,7 +178,7 @@ docker run -d --name "$NAME" --restart unless-stopped \
   --mamba-radix-cache-strategy extra_buffer --page-size 1 \
   --mamba-full-memory-ratio 11.93 \
   --reasoning-parser qwen3 --tool-call-parser qwen3_coder \
-  --default-chat-template-kwargs "{\"enable_thinking\": false, \"preserve_thinking\": false}" \
+  --default-chat-template-kwargs "{\"enable_thinking\": false}" \
   --max-running-requests ${MAX_RUNNING} --enable-metrics ${EXTRA} \
   $SPEC_ARGS
 
